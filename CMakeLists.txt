@@ -41,6 +41,7 @@ target_compile_features(ModelStore PUBLIC cxx_std_20)
 
 option(MODELSTORE_BUILD_TESTS "Build ModelStore tests" ON)
 if (MODELSTORE_BUILD_TESTS)
+  set(MODELSTORE_TESTS_ENABLED ON)
   set(GTEST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/googletest)
   if (EXISTS ${GTEST_SOURCE_DIR}/CMakeLists.txt)
     set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
@@ -49,27 +50,31 @@ if (MODELSTORE_BUILD_TESTS)
     add_subdirectory(${GTEST_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/third_party/googletest)
   else()
     if (NOT MODELSTORE_ALLOW_FETCHCONTENT)
-      message(FATAL_ERROR "ModelStore tests require vendored googletest or MODELSTORE_ALLOW_FETCHCONTENT.")
+      message(WARNING "ModelStore tests disabled: missing vendored googletest and MODELSTORE_ALLOW_FETCHCONTENT=OFF.")
+      set(MODELSTORE_TESTS_ENABLED OFF)
+    else()
+      include(FetchContent)
+      FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+      )
+      set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+      FetchContent_MakeAvailable(googletest)
     endif()
-    include(FetchContent)
-    FetchContent_Declare(
-      googletest
-      URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-    )
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
   endif()
 
-  enable_testing()
-  include(GoogleTest)
+  if (MODELSTORE_TESTS_ENABLED)
+    enable_testing()
+    include(GoogleTest)
 
-  add_executable(ModelStoreTests tests/ModelStoreTests.cpp)
-  target_link_libraries(ModelStoreTests PRIVATE ModelStore GTest::gtest_main)
-  gtest_discover_tests(ModelStoreTests)
+    add_executable(ModelStoreTests tests/ModelStoreTests.cpp)
+    target_link_libraries(ModelStoreTests PRIVATE ModelStore GTest::gtest_main)
+    gtest_discover_tests(ModelStoreTests)
 
-  add_executable(StreamParserTests tests/StreamParserTests.cpp)
-  target_link_libraries(StreamParserTests PRIVATE ModelStore GTest::gtest_main)
-  gtest_discover_tests(StreamParserTests)
+    add_executable(StreamParserTests tests/StreamParserTests.cpp)
+    target_link_libraries(StreamParserTests PRIVATE ModelStore GTest::gtest_main)
+    gtest_discover_tests(StreamParserTests)
+  endif()
 endif()
 
 include(GNUInstallDirs)
