@@ -1,5 +1,8 @@
 # ModelStore
 
+📖 [Docs & diagrams](https://cschladetsch.github.io/CppLmmModelStore/)
+
+
 Reusable model‑path and streaming utilities for DeepSeek projects. This folder is structured to be split into its own repository and consumed by multiple applications.
 
 **Structure**
